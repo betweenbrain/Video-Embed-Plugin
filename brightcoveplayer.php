@@ -13,13 +13,13 @@
 
 jimport('joomla.plugin.plugin');
 
-class plgContentBrightcoveplayer extends JPlugin {
+class plgSystemBrightcoveplayer extends JPlugin {
 
 	function plgSystemBrightcoveplayer(&$subject, $config) {
 		parent::__construct($subject, $config);
 	}
 
-	function onPrepareContent(&$article, &$params, $limitstart) {
+	function onAfterRender() {
 
 		$app = JFactory::getApplication();
 
@@ -27,33 +27,47 @@ class plgContentBrightcoveplayer extends JPlugin {
 			return TRUE;
 		}
 
-		$doc       = JFactory::getDocument();
-		// Regex supports option third numeric argument
-		$pattern   = '/{Brightcove\|([0-9]+)\|?([0-9]+)?}/i';
-		$playerKey = $params->get('playerKey');
-		$playerID  = $params->get('playerID');
+		$buffer = JResponse::getBody();
 
-		// Add remote script to document head once in case of multiple cases
-		preg_match_all($pattern, $article->text, $matches);
+		// Regex supports optional third numeric argument
+		$pattern   = '/{Brightcove\s([0-9]+)\s?([0-9]+)?}/i';
+		$playerKey = $this->params->get('playerKey');
+		$playerID  = $this->params->get('playerID');
+
+		// Find all matches in buffer
+		preg_match_all($pattern, $buffer, $matches);
+
+		// Add BrightcoveExperiences script to document head only once in case of multiple matches
 		$count = count($matches[0]);
 		if ($count) {
-			$doc->addScript('http://admin.brightcove.com/js/BrightcoveExperiences.js');
+			// As $doc->_scripts is already rendered, we need to attach our script to the head somewhow
+			// $doc->_scripts['http://admin.brightcove.com/js/BrightcoveExperiences.js'] = 'text/javascript';
+			$buffer = str_replace('</head>', '  <script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script >' . "\n" . '</head>', $buffer);
 		}
 
-		$replacement = '<object class="BrightcoveExperience" >';
-		$replacement .= '<param name="bgcolor" value="#FFFFFF" />';
-		$replacement .= '<param name="width" value="480" />';
-		$replacement .= '<param name="height" value="270" />';
-		$replacement .= '<param name="playerID" value="' . $playerID . '" />';
-		$replacement .= '<param name="playerKey" value="' . $playerKey . '" />';
-		$replacement .= '<param name="isVid" value="TRUE" />';
-		$replacement .= '<param name="isUI" value="TRUE" />';
-		$replacement .= '<param name="dynamicStreaming" value="TRUE" />';
-		$replacement .= '<param name="@videoPlayer" value="$1" />';
-		$replacement .= '</object >';
-		$replacement .= '<script type="text/javascript">brightcove.createExperiences();</script >';
+		foreach ($matches as $match) {
 
-		$article->text = preg_replace($pattern, $replacement, $article->text);
+			$match = str_replace(array('{', '}'), '', $match[0]);
+
+			$match = explode(' ', $match);
+
+			$replacement = '<object class="BrightcoveExperience" >';
+			$replacement .= '<param name="bgcolor" value="#FFFFFF" />';
+			$replacement .= '<param name="width" value="480" />';
+			$replacement .= '<param name="height" value="270" />';
+			$replacement .= '<param name="playerID" value="' . $playerID . '" />';
+			$replacement .= '<param name="playerKey" value="' . $playerKey . '" />';
+			$replacement .= '<param name="isVid" value="TRUE" />';
+			$replacement .= '<param name="isUI" value="TRUE" />';
+			$replacement .= '<param name="dynamicStreaming" value="TRUE" />';
+			$replacement .= '<param name="@videoPlayer" value="' . $match[1] . '" />';
+			$replacement .= '</object >';
+			$replacement .= '<script type="text/javascript">brightcove.createExperiences();</script >';
+
+			$buffer = preg_replace($pattern, $replacement, $buffer);
+		}
+
+		JResponse::setBody($buffer);
 
 		return TRUE;
 	}

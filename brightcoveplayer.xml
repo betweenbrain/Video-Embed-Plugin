@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <install version="2.5"
          type="plugin"
-         group="content"
+         group="system"
          method="upgrade">
 	<name>System - Brightcove Player</name>
 	<author>Matt Thomas</author>
