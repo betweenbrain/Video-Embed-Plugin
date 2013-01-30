@@ -38,8 +38,7 @@ class plgSystemBrightcoveplayer extends JPlugin {
 		preg_match_all($pattern, $buffer, $matches);
 
 		// Add BrightcoveExperiences script to document head only once in case of multiple matches
-		$count = count($matches[0]);
-		if ($count) {
+		if (count($matches[0])) {
 			// As $doc->_scripts is already rendered, we need to attach our script to the head somewhow
 			// $doc->_scripts['http://admin.brightcove.com/js/BrightcoveExperiences.js'] = 'text/javascript';
 			$buffer = str_replace('</head>', '  <script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script >' . "\n" . '</head>', $buffer);
@@ -51,18 +50,20 @@ class plgSystemBrightcoveplayer extends JPlugin {
 
 			$match = explode(' ', $match);
 
-			$replacement = '<object class="BrightcoveExperience" >';
-			$replacement .= '<param name="bgcolor" value="#FFFFFF" />';
-			$replacement .= '<param name="width" value="480" />';
-			$replacement .= '<param name="height" value="270" />';
-			$replacement .= '<param name="playerID" value="' . $playerID . '" />';
-			$replacement .= '<param name="playerKey" value="' . $playerKey . '" />';
-			$replacement .= '<param name="isVid" value="TRUE" />';
-			$replacement .= '<param name="isUI" value="TRUE" />';
-			$replacement .= '<param name="dynamicStreaming" value="TRUE" />';
-			$replacement .= '<param name="@videoPlayer" value="' . $match[1] . '" />';
-			$replacement .= '</object >';
-			$replacement .= '<script type="text/javascript">brightcove.createExperiences();</script >';
+			$replacement = <<<EOT
+			<object id="myExperience$match[1]" class="BrightcoveExperience">
+			<param name="bgcolor" value="#FFFFFF" />
+			<param name="width" value="480" />
+			<param name="height" value="270" />
+			<param name="playerID" value="$playerID" />
+			<param name="playerKey" value="$playerKey" />
+			<param name="isVid" value="true" />
+			<param name="isUI" value="true" />
+			<param name="dynamicStreaming" value="true" />
+			<param name="@videoPlayer" value="$match[1]" />
+			</object>
+			<script type="text/javascript">brightcove.createExperiences();</script>
+EOT;
 
 			$buffer = preg_replace($pattern, $replacement, $buffer);
 		}
