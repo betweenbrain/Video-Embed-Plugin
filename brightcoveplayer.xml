@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <install version="2.5" type="plugin" group="system" method="upgrade">
 	<name>System - Brightcove Player</name>
+	<creationDate>Januarary 29, 2013</creationDate>
 	<author>Matt Thomas</author>
-	<creationDate>Januarary 17, 2013</creationDate>
-	<copyright>(C) 2013 Matt Thomas. All rights reserved.</copyright>
-	<license>GNU/GPL</license>
 	<authorEmail>matt@betweenbrain.com</authorEmail>
 	<authorUrl>www.betweenbrain.com</authorUrl>
-	<version>0.1</version>
-	<description></description>
+	<copyright>(C) 2013 Matt Thomas. All rights reserved.</copyright>
+	<license>GNU GPL v3 or later</license>
+	<version>0.2</version>
+	<description>A simple plugin to convert {Brightcove ######} to the Brightcove player</description>
 	<files>
 		<filename plugin="brightcoveplayer">brightcoveplayer.php</filename>
 	</files>
