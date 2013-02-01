@@ -53,8 +53,8 @@ class plgSystemBrightcoveplayer extends JPlugin {
 			$replacement = <<<EOT
 			<object id="myExperience$match[1]" class="BrightcoveExperience">
 			<param name="bgcolor" value="#FFFFFF" />
-			<param name="width" value="480" />
-			<param name="height" value="270" />
+			<param name="width" value="902" />
+			<param name="height" value="507" />
 			<param name="playerID" value="$playerID" />
 			<param name="playerKey" value="$playerKey" />
 			<param name="isVid" value="true" />
