@@ -18,10 +18,20 @@
 		       default=""
 		       label="Player Key"
 		       description=""/>
-		<param name="playerID"
+		<param name="defaultPlayerId"
 		       type="text"
 		       default=""
-		       label="Player ID"
+		       label="Default Player ID"
+		       description=""/>
+		<param name="defaultWidth"
+		       type="text"
+		       default=""
+		       label="Default Width"
+		       description=""/>
+		<param name="defaultHeight"
+		       type="text"
+		       default=""
+		       label="Default Height"
 		       description=""/>
 	</params>
 </install>
