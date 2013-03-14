@@ -31,7 +31,7 @@ class plgSystemBrightcoveplayer extends JPlugin {
 		$buffer = JResponse::getBody();
 
 		// Regex supports optional third numeric argument
-		$pattern         = '/{Brightcove[\s0-9x]*}/i';
+		$pattern         = '/{Brightcove[0-9a-zA-Z\s\.\/:]*}/i';
 		$playerKey       = htmlspecialchars($this->params->get('playerKey'));
 		$defaultPlayerId = htmlspecialchars($this->params->get('defaultPlayerId'));
 		$defaultWidth    = htmlspecialchars($this->params->get('defaultWidth'));
@@ -58,6 +58,7 @@ class plgSystemBrightcoveplayer extends JPlugin {
 				$videoHeight = $defaultHeight;
 				$playerID    = $defaultPlayerId;
 				$videoID     = $attributes[0];
+				$videoLink   = JURI::current();
 
 				// Remove the video ID from array
 				array_shift($attributes);
@@ -65,7 +66,9 @@ class plgSystemBrightcoveplayer extends JPlugin {
 				// Check remaining bits, if there are any
 				if (count($attributes[0])) {
 					foreach ($attributes as $attribute) {
-						if (strstr($attribute, 'x')) {
+						if (strstr($attribute, 'http://')) {
+							$videoLink = $attribute;
+						} elseif (strstr($attribute, 'x')) {
 							$dims        = explode('x', $attribute);
 							$videoWidth  = $dims[0];
 							$videoHeight = $dims[1];
@@ -78,14 +81,15 @@ class plgSystemBrightcoveplayer extends JPlugin {
 				$replacement = <<<EOT
 			<object id="myExperience$videoID" class="BrightcoveExperience">
 			<param name="bgcolor" value="#FFFFFF" />
-			<param name="width" value="$videoWidth" />
+			<param name="dynamicStreaming" value="true" />
 			<param name="height" value="$videoHeight" />
+			<param name="isUI" value="true" />
+			<param name="isVid" value="true" />
+			<param name="linkBaseURL" value="$videoLink" />
 			<param name="playerID" value="$playerID" />
 			<param name="playerKey" value="$playerKey" />
-			<param name="isVid" value="true" />
-			<param name="isUI" value="true" />
-			<param name="dynamicStreaming" value="true" />
 			<param name="@videoPlayer" value="$videoID" />
+			<param name="width" value="$videoWidth" />
 			</object>
 			<script type="text/javascript">brightcove.createExperiences();</script>
 EOT;
