@@ -90,6 +90,7 @@ class plgSystemBrightcoveplayer extends JPlugin {
 			<param name="playerKey" value="$playerKey" />
 			<param name="@videoPlayer" value="$videoID" />
 			<param name="width" value="$videoWidth" />
+			<param name="wmode" value="transparent" />
 			</object>
 			<script type="text/javascript">brightcove.createExperiences();</script>
 EOT;
