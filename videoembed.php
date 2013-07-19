@@ -1,7 +1,7 @@
 <?php defined('_JEXEC') or die;
 
 /**
- * File       brightcoveplayer.php
+ * File       videoembed.php
  * Created    1/17/13 10:22 PM
  * Modified   3/14/13 2:17 PM
  * Author     Matt Thomas
@@ -14,10 +14,12 @@
 
 jimport('joomla.plugin.plugin');
 
-class plgSystemBrightcoveplayer extends JPlugin {
+class plgSystemVideoembed extends JPlugin {
 
-	function plgSystemBrightcoveplayer(&$subject, $config) {
+	function plgSystemVideoembed(&$subject, $config) {
 		parent::__construct($subject, $config);
+		$this->app = JFactory::getApplication();
+		$this->doc = JFactory::getDocument();
 	}
 
 	function onAfterRender() {
@@ -30,25 +32,22 @@ class plgSystemBrightcoveplayer extends JPlugin {
 
 		$buffer = JResponse::getBody();
 
-		// Regex supports optional third numeric argument
-		$pattern         = '/{Brightcove[0-9a-zA-Z\s\.\/:]*}/i';
+// Regex supports optional third numeric argument
+		$pattern         = '/{(Brightcove|Youtube)[^}]*}/i';
 		$playerKey       = htmlspecialchars($this->params->get('playerKey'));
 		$defaultPlayerId = htmlspecialchars($this->params->get('defaultPlayerId'));
 		$defaultWidth    = htmlspecialchars($this->params->get('defaultWidth'));
 		$defaultHeight   = htmlspecialchars($this->params->get('defaultHeight'));
 
 		// Find all matches in buffer
-		preg_match_all($pattern, $buffer, $matches);
+		preg_match_all($pattern, $buffer, $matches, PREG_SET_ORDER);
 
-		// Add BrightcoveExperiences script to document only once in case of multiple matches
-		if (count($matches[0])) {
-			// As $doc->_scripts is already rendered, we need to attach our script to the document
-			$buffer = str_replace('</body>', '<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script >' . "\n" . '</body>', $buffer);
+		if ($matches[0]) {
 
-			foreach ($matches[0] as $match) {
+			foreach ($matches as $key => $match) {
 
 				// Remove curly brackets, word Brightcove, and space after it.
-				$attributes = str_replace(array('{Brightcove ', '{brightcove ', '}'), '', $match);
+				$attributes = str_replace(array('{' . $match[1] . ' ', '}'), '', $match[0]);
 
 				// Turn that string into a thing (array)
 				$attributes = explode(' ', $attributes);
@@ -57,7 +56,7 @@ class plgSystemBrightcoveplayer extends JPlugin {
 				$videoWidth  = $defaultWidth;
 				$videoHeight = $defaultHeight;
 				$playerID    = $defaultPlayerId;
-				$videoID     = $attributes[0];
+				$videoID     = htmlspecialchars($attributes[0]);
 				$videoLink   = JURI::current();
 
 				// Remove the video ID from array
@@ -78,7 +77,16 @@ class plgSystemBrightcoveplayer extends JPlugin {
 					}
 				}
 
-				$replacement = <<<EOT
+				switch (strtolower($match[1])) {
+
+					case "brightcove" :
+
+						// As $doc->_scripts is already rendered, we need to attach our script to the document
+						if (!strpos($buffer, 'BrightcoveExperiences.js')) {
+							$buffer = str_replace('</body>', '<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script >' . "\n" . '</body>', $buffer);
+						}
+
+						$replacement = <<<EOT
 			<object id="myExperience$videoID" class="BrightcoveExperience">
 			<param name="bgcolor" value="#FFFFFF" />
 			<param name="dynamicStreaming" value="true" />
@@ -95,7 +103,40 @@ class plgSystemBrightcoveplayer extends JPlugin {
 			<script type="text/javascript">brightcove.createExperiences();</script>
 EOT;
 
-				$buffer = str_replace($match, $replacement, $buffer);
+						break;
+
+					case "youtube" :
+
+						$replacement = <<<EOT
+						<div id="ytplayer"></div>
+
+						<script>
+						  // Load the IFrame Player API code asynchronously.
+						  var tag = document.createElement('script');
+						  tag.src = "https://www.youtube.com/player_api";
+						  var firstScriptTag = document.getElementsByTagName('script')[0];
+						  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+						  // Replace the 'ytplayer' element with an <iframe> and
+						  // YouTube player after the API code downloads.
+						  var player;
+						  function onYouTubePlayerAPIReady() {
+						    player = new YT.Player('ytplayer', {
+						      height: '$videoHeight',
+						      width: '$videoWidth',
+						      videoId: '$videoID',
+						      playerVars : {
+						        'autohide':'1',
+						        'modestbranding':'1'
+						      }
+						    });
+						  }
+						</script>
+EOT;
+						break;
+				}
+
+				$buffer = str_replace($match[0], $replacement, $buffer);
 			}
 
 			JResponse::setBody($buffer);
