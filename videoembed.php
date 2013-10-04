@@ -18,13 +18,15 @@ class plgSystemVideoembed extends JPlugin {
 
 	function plgSystemVideoembed(&$subject, $config) {
 		parent::__construct($subject, $config);
-		$this->app = JFactory::getApplication();
-		$this->doc = JFactory::getDocument();
+		$this->app  = JFactory::getApplication();
+		$this->doc  = JFactory::getDocument();
+		$this->menu = $this->app->getMenu();
 	}
 
 	function onAfterRender() {
 
-		$app = JFactory::getApplication();
+		$app  = JFactory::getApplication();
+		$base = JURI::base();
 
 		if ($app->isAdmin()) {
 			return TRUE;
@@ -32,19 +34,33 @@ class plgSystemVideoembed extends JPlugin {
 
 		$buffer = JResponse::getBody();
 
-// Regex supports optional third numeric argument
+		// Regex supports optional third numeric argument
 		$pattern         = '/{(Brightcove|Youtube)[^}]*}/i';
 		$playerKey       = htmlspecialchars($this->params->get('playerKey'));
 		$defaultPlayerId = htmlspecialchars($this->params->get('defaultPlayerId'));
-		$defaultWidth    = htmlspecialchars($this->params->get('defaultWidth'));
-		$defaultHeight   = htmlspecialchars($this->params->get('defaultHeight'));
+		$videoMenuId     = htmlspecialchars($this->params->get('videoMenuId'));
+		$videoPlayerId   = htmlspecialchars($this->params->get('videoPlayerId'));
+
+		// Set player ID specific for Video section specific
+		if (JRequest::getCmd('Itemid') == $videoMenuId) {
+			$defaultPlayerId = $videoPlayerId;
+		}
+
+		$defaultWidth  = htmlspecialchars($this->params->get('defaultWidth'));
+		$defaultHeight = htmlspecialchars($this->params->get('defaultHeight'));
 
 		// Find all matches in buffer
 		preg_match_all($pattern, $buffer, $matches, PREG_SET_ORDER);
 
 		if ($matches[0]) {
 
+			// Initialize switch for tracking load of BrightcoveExperiences.js
+			$isLoadedBE = NULL;
+
 			foreach ($matches as $key => $match) {
+
+				// Initialize variable for appending
+				$replacement = NULL;
 
 				// Remove curly brackets, word Brightcove, and space after it.
 				$attributes = str_replace(array('{' . $match[1] . ' ', '}'), '', $match[0]);
@@ -81,12 +97,11 @@ class plgSystemVideoembed extends JPlugin {
 
 					case "brightcove" :
 
-						// As $doc->_scripts is already rendered, we need to attach our script to the document
-						if (!strpos($buffer, 'BrightcoveExperiences.js')) {
-							$buffer = str_replace('</body>', '<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script >' . "\n" . '</body>', $buffer);
-						}
+						$replacement .= <<<EOT
+							<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>
+EOT;
 
-						$replacement = <<<EOT
+						$replacement .= <<<EOT
 			<object id="myExperience$videoID" class="BrightcoveExperience">
 			<param name="bgcolor" value="#FFFFFF" />
 			<param name="dynamicStreaming" value="true" />
@@ -102,36 +117,19 @@ class plgSystemVideoembed extends JPlugin {
 			</object>
 			<script type="text/javascript">brightcove.createExperiences();</script>
 EOT;
-
 						break;
 
 					case "youtube" :
 
 						$replacement = <<<EOT
-						<div id="ytplayer"></div>
-
-						<script>
-						  // Load the IFrame Player API code asynchronously.
-						  var tag = document.createElement('script');
-						  tag.src = "https://www.youtube.com/player_api";
-						  var firstScriptTag = document.getElementsByTagName('script')[0];
-						  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-						  // Replace the 'ytplayer' element with an <iframe> and
-						  // YouTube player after the API code downloads.
-						  var player;
-						  function onYouTubePlayerAPIReady() {
-						    player = new YT.Player('ytplayer', {
-						      height: '$videoHeight',
-						      width: '$videoWidth',
-						      videoId: '$videoID',
-						      playerVars : {
-						        'autohide':'1',
-						        'modestbranding':'1'
-						      }
-						    });
-						  }
-						</script>
+						<iframe
+						frameborder="0"
+						allowfullscreen="1"
+						title="YouTube video player"
+						width="$videoWidth"
+						height="$videoHeight"
+						src="http://www.youtube.com/embed/$videoID?autohide=1&modestbranding=1&showinfo=0&wmode=opaque&origin=$base">
+						</iframe>
 EOT;
 						break;
 				}

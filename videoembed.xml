@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<install version="2.5" type="plugin" group="system" method="upgrade">
+<install version="2.5"
+         type="plugin"
+         group="system"
+         method="upgrade">
 	<name>System - Video Embed</name>
 	<creationDate>March 26, 2013</creationDate>
 	<author>Matt Thomas</author>
@@ -8,7 +11,9 @@
 	<copyright>(C) 2013 Matt Thomas. All rights reserved.</copyright>
 	<license>GNU GPL v3 or later</license>
 	<version>1.1</version>
-	<description>A simple plugin to convert {Brightcove[or Youtube] [Video ID] [width]x[height] [Player ID] [Share URL]} to the proper embed code.</description>
+	<description>A simple plugin to convert {Brightcove[or Youtube] [Video ID] [width]x[height] [Player ID] [Share URL]}
+		to the proper embed code.
+	</description>
 	<files>
 		<filename plugin="videoembed">videoembed.php</filename>
 	</files>
@@ -23,6 +28,16 @@
 		       default=""
 		       label="Default Player ID"
 		       description=""/>
+		<param name="videoPlayerId"
+		       type="text"
+		       default=""
+		       label="Video Section Player ID"
+		       description=""/>
+		<param name="videoMenuId"
+		       type="menuitem"
+		       default="2080"
+		       label="Video Root Menu Item"
+		       description="Select a menu"/>
 		<param name="defaultWidth"
 		       type="text"
 		       default=""
